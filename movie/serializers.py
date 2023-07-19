@@ -42,7 +42,7 @@ class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = "__all__"
-        read_only_fields = ['id', 'created_at' , 'updated_at', 'comments']
+        read_only_fields = ['id', 'created_at' , 'updated_at', 'comments', 'num']
     
 
 class MovieListSerializer(serializers.ModelSerializer):

@@ -9,6 +9,8 @@ from .serializers import MovieSerializer, CommentSerializer, TagSerializer, Movi
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
+from .permissions import IsOwnerOrReadOnly
+from rest_framework.decorators import action
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
@@ -50,10 +52,24 @@ class MovieViewSet(viewsets.ModelViewSet):
         movie.tag.clear()
         self.handle_tags(movie)
         
-    
+    def get_permissions(self):
+        if self.action in ["update", "destroy"]:
+            return [IsAdminUser()]
+        return []
 
-
+    @action(methods = ['GET'], detail=False)
+    def recommend(self, request):
+        ran_movie = self.get_queryset().order_by("?").first()
+        ran_movie_serializer = MovieListSerializer(ran_movie)
+        return Response(ran_movie_serializer.data)
     
+    @action(methods=["GET"], detail=True)
+    def test(self, request, pk=None):
+        test_movie = self.get_object()
+        test_movie.num += 1
+        test_movie.save(update_fields=["num"])
+        return Response()
+
 
 
 # @api_view(['GET','POST'])
@@ -76,6 +92,10 @@ class CommentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
+    def get_permissions(self):
+        if self.action in ["update", "destroy"]:
+            return [IsOwnerOrReadOnly()]
+        return []
 
 
 class MovieCommentViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
